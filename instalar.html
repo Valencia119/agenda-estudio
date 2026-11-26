@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Instalar Agenda Estudio</title>
+  <meta name="description" content="Instala la agenda del estudio en iPhone o en Windows" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <style>
+    :root {
+      --bg: #f6f1ea; --surface: #fffdf9; --surface-2: #f1ebe2; --ink: #2b2522; --muted: #7d726b;
+      --line: #e7ddd1; --accent: #a8682a; --accent-soft: #f4e4cf;
+      --serif: ui-serif, 'New York', Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme='light']) {
+        --bg: #161311; --surface: #201b18; --surface-2: #2a2420; --ink: #f3ece4; --muted: #a3978d;
+        --line: #362e29; --accent: #dda56a; --accent-soft: #3a2b1d; color-scheme: dark;
+      }
+    }
+    :root[data-theme='dark'] {
+      --bg: #161311; --surface: #201b18; --surface-2: #2a2420; --ink: #f3ece4; --muted: #a3978d;
+      --line: #362e29; --accent: #dda56a; --accent-soft: #3a2b1d; color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+    main { max-width: 880px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 32px) 16px 48px; }
+    header { text-align: center; margin-bottom: 32px; }
+    header img { border-radius: 20px; box-shadow: 0 8px 30px rgb(0 0 0 / 12%); }
+    h1 { font-family: var(--serif); font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 16px 0 6px; font-weight: 600; }
+    header p { color: var(--muted); margin: 0; }
+    .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+    .card.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); order: -1; }
+    .tag { align-self: flex-start; font-size: .75rem; font-weight: 700; background: var(--accent-soft); color: var(--accent); padding: 3px 10px; border-radius: 999px; display: none; }
+    .card.mine .tag { display: inline-block; }
+    h2 { margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+    ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 600; text-decoration: none; }
+    .btn.soft { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+    .muted { color: var(--muted); font-size: .9rem; margin: 0; }
+    .note { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; font-size: .9rem; margin: 0; }
+    kbd { font-family: inherit; font-weight: 700; }
+    svg { flex: none; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icons/icon-192.png" alt="" width="88" height="88" />
+    <h1>Agenda Estudio</h1>
+    <p>Agenda, clientes y recordatorios del estudio de fotografía</p>
+  </header>
+
+  <div class="grid">
+    <section class="card" id="ios">
+      <span class="tag">Tu dispositivo</span>
+      <h2>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+        iPhone / iPad
+      </h2>
+      <ol>
+        <li>Abre esta página en <b>Safari</b> (no en Chrome ni Instagram).</li>
+        <li>Toca el botón <b>Abrir la agenda</b> de aquí abajo.</li>
+        <li>Toca <b>Compartir</b> (el cuadrito con la flecha ↑) y elige <b>“Agregar a pantalla de inicio”</b>.</li>
+        <li>Abre <b>Agenda</b> desde el ícono nuevo, crea tu cuenta o entra, y toca <b>“Activar recordatorios”</b> → <b>Permitir</b>.</li>
+      </ol>
+      <a class="btn" href="./">Abrir la agenda</a>
+      <p class="muted">Necesita iOS 16.4 o más nuevo para las notificaciones.</p>
+    </section>
+
+    <section class="card" id="win">
+      <span class="tag">Tu dispositivo</span>
+      <h2>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Windows (PC)
+      </h2>
+      <ol>
+        <li>Toca <b>Descargar para Windows</b> y abre el archivo descargado.</li>
+        <li>Si sale <b>“Windows protegió tu PC”</b>, toca <b>Más información</b> → <b>Ejecutar de todas formas</b> (pasa porque el programa es nuevo y no está firmado).</li>
+        <li>Se instala solo, queda en el escritorio y arranca con Windows. Los avisos salen en la esquina de la pantalla.</li>
+      </ol>
+      <a class="btn" id="exe" href="#">Descargar para Windows (.exe)</a>
+      <p class="note"><b>Otra opción sin descargar:</b> abre la agenda en Edge o Chrome y toca el ícono de <kbd>Instalar</kbd> en la barra de direcciones.</p>
+      <a class="btn soft" href="./">Abrir en el navegador</a>
+    </section>
+  </div>
+</main>
+<script>
+  var REPO = 'Valencia119/agenda-estudio';
+  document.getElementById('exe').href = 'https://github.com/' + REPO + '/releases/latest/download/AgendaEstudio-Setup.exe';
+  var ua = navigator.userAgent;
+  var ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var win = /windows/i.test(ua);
+  if (ios) document.getElementById('ios').classList.add('mine');
+  else if (win) document.getElementById('win').classList.add('mine');
+</script>
+</body>
+</html>
