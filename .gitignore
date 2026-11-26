@@ -1,0 +1,12 @@
+node_modules/
+dist/
+desktop/node_modules/
+desktop/dist/
+.env
+.env.local
+*.local
+supabase/.temp/
+supabase/.branches/
+.vapid-keys.json
+.DS_Store
+Thumbs.db

@@ -1,0 +1,49 @@
+{
+  "name": "agenda-estudio-desktop",
+  "productName": "Agenda Estudio",
+  "version": "1.0.0",
+  "description": "Agenda Estudio para Windows",
+  "author": "Agenda Estudio",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.agendaestudio.app",
+    "productName": "Agenda Estudio",
+    "artifactName": "AgendaEstudio-Setup.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "offline.html",
+      "build/icon.png",
+      "build/tray.png"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Agenda Estudio",
+      "runAfterFinish": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^38.8.6",
+    "electron-builder": "^26.18.0"
+  },
+  "allowScripts": {
+    "electron@38.8.6": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

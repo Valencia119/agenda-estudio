@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sin conexión · Agenda Estudio</title>
+  <style>
+    :root { --bg: #f6f1ea; --ink: #2b2522; --muted: #7d726b; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #161311; --ink: #f3ece4; --muted: #a3978d; color-scheme: dark; } }
+    :root[data-theme='dark'] { --bg: #161311; --ink: #f3ece4; --muted: #a3978d; color-scheme: dark; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+      font: 16px/1.5 -apple-system, 'Segoe UI', system-ui, sans-serif; text-align: center; padding: 16px; }
+    h1 { font-family: Georgia, serif; font-weight: 600; margin: 0 0 8px; }
+    p { color: var(--muted); margin: 0 0 24px; }
+    button { min-height: 46px; padding: 0 24px; border-radius: 999px; border: 0; background: var(--ink); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Sin conexión a internet</h1>
+    <p>La agenda necesita internet la primera vez que se abre. Revisa tu conexión.</p>
+    <button onclick="window.agendaDesktop && window.agendaDesktop.retry()">Reintentar</button>
+  </div>
+  <script>setInterval(function () { if (navigator.onLine && window.agendaDesktop) window.agendaDesktop.retry(); }, 15000);</script>
+</body>
+</html>
