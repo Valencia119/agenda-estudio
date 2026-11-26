@@ -3,7 +3,7 @@ import AppointmentCard from '../components/AppointmentCard.jsx';
 import { Empty, Icon } from '../components/ui.jsx';
 import { addDays, balanceOf, dayKey, fmtDayLong, greeting, money, moneyShort, relativeDay, startOfDay } from '../lib/format.js';
 
-export default function Today({ appointments, clients, settings, now, banner, onOpen, onNew }) {
+export default function Today({ appointments, clients, settings, now, banner, filterBar, onOpen, onNew }) {
   const currency = settings?.currency || 'COP';
   const clientById = useMemo(() => Object.fromEntries(clients.map((c) => [c.id, c])), [clients]);
 
@@ -53,6 +53,7 @@ export default function Today({ appointments, clients, settings, now, banner, on
       </header>
 
       {banner}
+      {filterBar}
 
       <div className="stats">
         <div className="stat"><span className="stat-num">{activeToday.length}</span><span className="stat-label">Hoy</span></div>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabase.js';
 
+export const INVITE_KEY = 'agenda-invite';
+
 async function fetchAll(table, order) {
   const out = [];
   const size = 1000;
@@ -14,35 +16,64 @@ async function fetchAll(table, order) {
 }
 
 const deviceTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota';
+const EMPTY = { clients: [], appointments: [], settings: null, studio: null, members: [] };
 
 export function useAgenda(userId) {
   const cacheKey = `agenda-cache-${userId}`;
   const [data, setData] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(cacheKey)) || { clients: [], appointments: [], settings: null };
+      return { ...EMPTY, ...JSON.parse(localStorage.getItem(cacheKey)) };
     } catch {
-      return { clients: [], appointments: [], settings: null };
+      return EMPTY;
     }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const timer = useRef(null);
+  const studioIdRef = useRef(data.studio?.id ?? null);
 
-  const load = useCallback(async () => {
+  const inflight = useRef(null);
+  const load = useCallback(() => {
+    // nunca dos cargas a la vez (evita estudios o ajustes duplicados)
+    if (!inflight.current) inflight.current = doLoad().finally(() => { inflight.current = null; });
+    return inflight.current;
+  }, [userId, cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const doLoad = async () => {
     try {
-      const [clients, appointments, s] = await Promise.all([
+      // invitación pendiente (link ?invitar=CODIGO)
+      let pending = null;
+      try {
+        pending = localStorage.getItem(INVITE_KEY);
+        localStorage.removeItem(INVITE_KEY);
+      } catch { /* */ }
+      if (pending) {
+        const r = await supabase.rpc('join_studio', { code: pending });
+        if (r.error) setNotice({ type: 'err', text: r.error.message });
+        else if (!r.data?.already) setNotice({ type: 'ok', text: `Te uniste a ${r.data.name} 🎉` });
+      }
+      const ensured = await supabase.rpc('ensure_studio');
+      if (ensured.error) throw ensured.error;
+
+      const [clients, appointments, s, st, members] = await Promise.all([
         fetchAll('clients', 'name'),
         fetchAll('appointments', 'start_at'),
-        supabase.from('settings').select('*').maybeSingle()
+        supabase.from('settings').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('studios').select('*').maybeSingle(),
+        supabase.from('studio_members').select('*').order('joined_at', { ascending: true })
       ]);
       if (s.error) throw s.error;
+      if (st.error) throw st.error;
+      if (members.error) throw members.error;
+
       let settings = s.data;
       const tz = deviceTz();
       if (!settings) {
         const r = await supabase.from('settings').insert({ user_id: userId, timezone: tz }).select().single();
         if (r.error) {
           // otra carga simultánea ya los creó: se leen
-          const again = await supabase.from('settings').select('*').maybeSingle();
+          const again = await supabase.from('settings').select('*').eq('user_id', userId).maybeSingle();
           if (again.error || !again.data) throw r.error;
           settings = again.data;
         } else {
@@ -53,7 +84,8 @@ export function useAgenda(userId) {
         const r = await supabase.from('settings').update({ timezone: tz }).eq('user_id', userId).select().single();
         if (!r.error) settings = r.data;
       }
-      const next = { clients, appointments, settings };
+      const next = { clients, appointments, settings, studio: st.data, members: members.data };
+      studioIdRef.current = st.data?.id ?? null;
       setData(next);
       setError(null);
       try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch { /* lleno */ }
@@ -62,7 +94,7 @@ export function useAgenda(userId) {
     } finally {
       setLoading(false);
     }
-  }, [userId, cacheKey]);
+  };
 
   const scheduleLoad = useCallback(() => {
     clearTimeout(timer.current);
@@ -71,34 +103,44 @@ export function useAgenda(userId) {
 
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel(`agenda-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${userId}` }, scheduleLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `user_id=eq.${userId}` }, scheduleLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `user_id=eq.${userId}` }, scheduleLoad)
-      .subscribe();
     const onVisible = () => document.visibilityState === 'visible' && scheduleLoad();
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', scheduleLoad);
     return () => {
-      supabase.removeChannel(channel);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', scheduleLoad);
       clearTimeout(timer.current);
     };
-  }, [userId, load, scheduleLoad]);
+  }, [load, scheduleLoad]);
+
+  // tiempo real: cualquier cambio de una compañera del estudio aparece al instante
+  const studioId = data.studio?.id;
+  useEffect(() => {
+    if (!studioId) return;
+    const f = `studio_id=eq.${studioId}`;
+    const channel = supabase
+      .channel(`studio-${studioId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: f }, scheduleLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: f }, scheduleLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'studio_members', filter: f }, scheduleLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'studios', filter: `id=eq.${studioId}` }, scheduleLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `user_id=eq.${userId}` }, scheduleLoad)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [studioId, userId, scheduleLoad]);
 
   // ---------- acciones ----------
   const check = (r) => {
     if (r.error) throw new Error(navigator.onLine ? r.error.message : 'Sin conexión a internet. Intenta de nuevo.');
     return r.data;
   };
+  const owned = () => ({ user_id: userId, ...(studioIdRef.current ? { studio_id: studioIdRef.current } : {}) });
 
   const saveClient = async (client) => {
-    const { id, created_at, updated_at, ...fields } = client;
+    const { id, created_at, updated_at, user_id, studio_id, ...fields } = client;
     const row = id
       ? check(await supabase.from('clients').update(fields).eq('id', id).select().single())
-      : check(await supabase.from('clients').insert({ ...fields, user_id: userId }).select().single());
+      : check(await supabase.from('clients').insert({ ...fields, ...owned() }).select().single());
     setData((d) => ({
       ...d,
       clients: [...d.clients.filter((c) => c.id !== row.id), row].sort((a, b) => a.name.localeCompare(b.name, 'es'))
@@ -116,10 +158,10 @@ export function useAgenda(userId) {
   };
 
   const saveAppointment = async (appt) => {
-    const { id, created_at, updated_at, ...fields } = appt;
+    const { id, created_at, updated_at, user_id, studio_id, ...fields } = appt;
     const row = id
       ? check(await supabase.from('appointments').update(fields).eq('id', id).select().single())
-      : check(await supabase.from('appointments').insert({ ...fields, user_id: userId }).select().single());
+      : check(await supabase.from('appointments').insert({ ...fields, ...owned() }).select().single());
     setData((d) => ({
       ...d,
       appointments: [...d.appointments.filter((a) => a.id !== row.id), row].sort((a, b) => a.start_at.localeCompare(b.start_at))
@@ -138,5 +180,31 @@ export function useAgenda(userId) {
     return row;
   };
 
-  return { ...data, loading, error, reload: load, saveClient, deleteClient, saveAppointment, deleteAppointment, saveSettings };
+  const saveStudioName = async (name) => {
+    const row = check(await supabase.from('studios').update({ name }).eq('id', studioIdRef.current).select().single());
+    setData((d) => ({ ...d, studio: row }));
+  };
+
+  const saveMyName = async (display_name) => {
+    const row = check(await supabase.from('studio_members').update({ display_name }).eq('user_id', userId).select().single());
+    setData((d) => ({ ...d, members: d.members.map((m) => (m.user_id === userId ? row : m)) }));
+  };
+
+  const joinStudio = async (code) => {
+    const r = check(await supabase.rpc('join_studio', { code }));
+    await load();
+    return r;
+  };
+
+  const newInviteCode = async () => {
+    const code = check(await supabase.rpc('new_invite_code'));
+    setData((d) => ({ ...d, studio: { ...d.studio, invite_code: code } }));
+    return code;
+  };
+
+  return {
+    ...data, loading, error, notice, clearNotice: () => setNotice(null), reload: load,
+    saveClient, deleteClient, saveAppointment, deleteAppointment, saveSettings,
+    saveStudioName, saveMyName, joinStudio, newInviteCode
+  };
 }

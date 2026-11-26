@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StudioCtx } from './lib/studio.js';
+import { WhoFilter } from './components/Who.jsx';
 import { supabase, configured } from './supabase.js';
 import { useAgenda } from './lib/useAgenda.js';
 import { startOfDay } from './lib/format.js';
@@ -58,8 +60,34 @@ const TABS = [
 function Main({ user }) {
   const toast = useToast();
   const agenda = useAgenda(user.id);
-  const { appointments, clients, settings } = agenda;
+  const { appointments, clients, settings, members, studio } = agenda;
   const [tab, setTab] = useState(() => localStorage.getItem('agenda-tab') || 'today');
+  const [who, setWho] = useState('all');
+
+  const studioValue = useMemo(() => ({
+    members,
+    memberById: Object.fromEntries(members.map((m) => [m.user_id, m])),
+    me: user.id,
+    multi: members.length > 1,
+    studio
+  }), [members, user.id, studio]);
+
+  // filtro por fotógrafa: muestra las suyas y las de "Ambas"
+  const shownAppointments = useMemo(
+    () => (who === 'all' ? appointments : appointments.filter((a) => a.assigned_to === who || a.assigned_to === null)),
+    [appointments, who]
+  );
+  useEffect(() => {
+    if (who !== 'all' && !members.some((m) => m.user_id === who)) setWho('all');
+  }, [members, who]);
+
+  // aviso al unirse a un estudio por invitación
+  useEffect(() => {
+    if (agenda.notice) {
+      toast(agenda.notice.text, agenda.notice.type);
+      agenda.clearNotice();
+    }
+  }, [agenda.notice]); // eslint-disable-line react-hooks/exhaustive-deps
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(() => startOfDay(new Date()));
   const [now, setNow] = useState(Date.now());
@@ -126,9 +154,11 @@ function Main({ user }) {
 
   const appt = modal?.id && modal.type.startsWith('appt') ? appointments.find((a) => a.id === modal.id) : null;
   const client = modal?.id && modal.type.startsWith('client') ? clients.find((c) => c.id === modal.id) : null;
-  const viewProps = { appointments, clients, settings, now };
+  const viewProps = { appointments: shownAppointments, clients, settings, now };
+  const filterBar = <WhoFilter members={members} value={who} onChange={setWho} me={user.id} />;
 
   return (
+    <StudioCtx.Provider value={studioValue}>
     <div className="app">
       <nav className="nav" aria-label="Secciones">
         <div className="nav-brand"><img src="icons/icon-192.png" alt="" width="34" height="34" /><span>Agenda Estudio</span></div>
@@ -142,12 +172,13 @@ function Main({ user }) {
 
       <main className="content">
         {agenda.error && <div className="offline">{agenda.error}</div>}
-        {tab === 'today' && <Today {...viewProps} banner={banner} onOpen={openAppt} onNew={newAppt} />}
-        {tab === 'calendar' && <Calendar {...viewProps} selected={selected} setSelected={setSelected} onOpen={openAppt} onNew={newAppt} />}
-        {tab === 'clients' && <Clients {...viewProps} onOpen={openClient} onNew={() => setModal({ type: 'client-form' })} />}
+        {tab === 'today' && <Today {...viewProps} banner={banner} filterBar={filterBar} onOpen={openAppt} onNew={newAppt} />}
+        {tab === 'calendar' && <Calendar {...viewProps} filterBar={filterBar} selected={selected} setSelected={setSelected} onOpen={openAppt} onNew={newAppt} />}
+        {tab === 'clients' && <Clients {...viewProps} appointments={appointments} onOpen={openClient} onNew={() => setModal({ type: 'client-form' })} />}
         {tab === 'settings' && (
           <Settings settings={settings} user={user} pushState={pushState} onEnablePush={onEnablePush} onTestPush={onTestPush}
             saveSettings={agenda.saveSettings} onSignOut={() => supabase.auth.signOut()}
+            studioActions={{ saveStudioName: agenda.saveStudioName, saveMyName: agenda.saveMyName, joinStudio: agenda.joinStudio, newInviteCode: agenda.newInviteCode }}
             data={{ clients, appointments }} />
         )}
       </main>
@@ -200,5 +231,6 @@ function Main({ user }) {
         />
       )}
     </div>
+    </StudioCtx.Provider>
   );
 }

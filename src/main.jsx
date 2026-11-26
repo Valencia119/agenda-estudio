@@ -2,6 +2,18 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
+import { INVITE_KEY } from './lib/useAgenda.js';
+
+// link de invitación: ?invitar=CODIGO → se guarda y se limpia la dirección
+try {
+  const url = new URL(location.href);
+  const code = url.searchParams.get('invitar');
+  if (code) {
+    localStorage.setItem(INVITE_KEY, code.trim().toUpperCase());
+    url.searchParams.delete('invitar');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+} catch { /* */ }
 
 // Si algo falla, muestra un aviso con botón para recargar en vez de una pantalla en blanco
 class ErrorBoundary extends React.Component {

@@ -5,7 +5,7 @@ import { addDays, dayKey, fmtDayLong, fmtMonth, startOfDay } from '../lib/format
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-export default function Calendar({ appointments, clients, settings, now, selected, setSelected, onOpen, onNew }) {
+export default function Calendar({ appointments, clients, settings, now, filterBar, selected, setSelected, onOpen, onNew }) {
   const [month, setMonth] = useState(() => {
     const d = new Date(selected);
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -51,6 +51,8 @@ export default function Calendar({ appointments, clients, settings, now, selecte
           <button className="icon-btn" onClick={() => shift(1)} aria-label="Mes siguiente"><Icon name="right" /></button>
         </div>
       </header>
+
+      {filterBar}
 
       <div className="month">
         {WEEKDAYS.map((w, i) => <div key={i} className="month-wd">{w}</div>)}

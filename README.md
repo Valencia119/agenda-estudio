@@ -25,7 +25,9 @@ Agenda virtual y mini-CRM para un estudio de fotografía. Funciona en **iPhone**
   - ☀️ Resumen cada mañana con lo del día.
   - 🌙 Aviso cada noche con lo de mañana.
   - Por cada cita: 1 semana, 2 días, 1 día, 3 h, 2 h, 1 h, 30 min, 15 min, a la hora, o el tiempo que ella quiera.
+- **Estudio compartido**: varias fotógrafas usan la misma agenda. Cada cita dice para quién es (o "Ambas") y quién la agendó; filtro y color por fotógrafa; todas reciben todos los avisos. Se invita con un link desde **Ajustes → Estudio → Enviar por WhatsApp**.
 - Sincronización en tiempo real entre iPhone y PC, modo oscuro y copia de seguridad descargable.
+- Las actualizaciones llegan solas: al publicar una versión nueva, la app se actualiza la próxima vez que se abre (no hay que descargar nada).
 
 ## 🛠️ Cómo está hecha
 

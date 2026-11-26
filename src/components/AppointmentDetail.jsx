@@ -5,6 +5,8 @@ import {
 } from '../lib/format.js';
 import { isIOS } from '../lib/device.js';
 import { Icon, Sheet, useToast } from './ui.jsx';
+import { useStudio } from '../lib/studio.js';
+import { whoOf } from './Who.jsx';
 
 const WA_PHRASE = {
   sesion: 'tu sesión de fotos',
@@ -16,6 +18,9 @@ const WA_PHRASE = {
 
 export default function AppointmentDetail({ appt, client, settings, saveAppointment, deleteAppointment, onEdit, onOpenClient, onClose }) {
   const toast = useToast();
+  const { memberById, multi } = useStudio();
+  const who = whoOf(appt, memberById);
+  const bookedBy = memberById[appt.user_id]?.display_name;
   const [busy, setBusy] = useState(false);
   const currency = settings?.currency || 'COP';
   const start = new Date(appt.start_at);
@@ -67,6 +72,12 @@ export default function AppointmentDetail({ appt, client, settings, saveAppointm
         <p><Icon name="calendar" size={16} /> {fmtDayLong(start)}</p>
         <p><Icon name="clock" size={16} /> {fmtTime(start)}{end ? ` – ${fmtTime(end)}` : ''}</p>
         {appt.session_type && <p><Icon name="camera" size={16} /> {appt.session_type}</p>}
+        {multi && (
+          <p className="who-line" style={{ '--who': who.color }}>
+            <i className="who-dot" aria-hidden="true" /> Fotógrafa: <strong>{who.name}</strong>
+            {bookedBy && <span className="muted small"> · agendó {bookedBy}</span>}
+          </p>
+        )}
       </div>
 
       <section className="detail-section">

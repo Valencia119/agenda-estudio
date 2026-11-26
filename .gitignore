@@ -12,3 +12,4 @@ supabase/.branches/
 Thumbs.db
 .supabase-db-password
 .test-account.json
+backups/

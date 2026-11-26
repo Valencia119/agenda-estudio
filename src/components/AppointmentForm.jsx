@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { KINDS, STATUSES, SESSION_TYPES, REMINDER_OPTIONS, dayKey, timeKey, fromKeys, reminderLabel } from '../lib/format.js';
 import { Field, Sheet, useToast } from './ui.jsx';
+import { useStudio } from '../lib/studio.js';
 
 function nextRoundHour() {
   const d = new Date();
@@ -11,7 +12,9 @@ function nextRoundHour() {
 
 export default function AppointmentForm({ initial, defaultDate, defaultClientId, clients, settings, saveAppointment, saveClient, onClose, onSaved }) {
   const toast = useToast();
+  const { members, me, multi } = useStudio();
   const editing = Boolean(initial?.id);
+  const [assignedTo, setAssignedTo] = useState(editing ? initial.assigned_to ?? null : me);
 
   const startBase = initial?.start_at
     ? new Date(initial.start_at)
@@ -91,6 +94,7 @@ export default function AppointmentForm({ initial, defaultDate, defaultClientId,
       const row = await saveAppointment({
         ...(editing ? { id: initial.id } : {}),
         client_id: cid,
+        assigned_to: multi ? assignedTo : me,
         kind: f.kind,
         session_type: f.session_type.trim() || null,
         title,
@@ -134,6 +138,25 @@ export default function AppointmentForm({ initial, defaultDate, defaultClientId,
             </button>
           ))}
         </div>
+
+        {multi && (
+          <div className="field">
+            <span className="field-label">Fotógrafa</span>
+            <div className="chips" role="radiogroup" aria-label="Fotógrafa">
+              {members.map((m) => (
+                <button type="button" key={m.user_id} role="radio" aria-checked={assignedTo === m.user_id}
+                  className={`chip ${assignedTo === m.user_id ? 'on' : ''}`} style={{ '--who': m.color }}
+                  onClick={() => setAssignedTo(m.user_id)}>
+                  <i className="who-dot" aria-hidden="true" />{m.display_name}
+                </button>
+              ))}
+              <button type="button" role="radio" aria-checked={assignedTo === null}
+                className={`chip ${assignedTo === null ? 'on' : ''}`} onClick={() => setAssignedTo(null)}>
+                Ambas
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid-2">
           <Field label="Fecha"><input type="date" required value={f.date} onChange={set('date')} /></Field>

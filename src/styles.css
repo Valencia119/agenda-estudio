@@ -319,6 +319,20 @@ input[type='time'], input[type='date'] { -webkit-appearance: none; appearance: n
 .status-cancelada.pill { background: var(--err-soft); color: var(--danger); }
 .owed-pill { background: var(--err-soft); color: var(--danger); }
 
+/* ---------- fotógrafas del estudio ---------- */
+.who-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--who, var(--muted)); }
+.who { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--ink-2); }
+.chip .who-dot { margin-right: 2px; }
+.who-filter { margin-top: -6px; }
+.who-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.team { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.team li { display: flex; align-items: center; gap: 10px; }
+.team .avatar { width: 36px; height: 36px; font-size: 1rem; }
+.invite { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: 0.08em; color: var(--ink); }
+.join summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 4px 0; }
+.join form { grid-template-columns: 1fr 0 auto; }
+
 /* ---------- calendario ---------- */
 .month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
 .month-wd { text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--muted); padding: 4px 0 6px; }

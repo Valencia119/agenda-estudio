@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '../supabase.js';
 import { Field, Icon } from './ui.jsx';
+import { INVITE_KEY } from '../lib/useAgenda.js';
+
+const hasInvite = () => {
+  try { return Boolean(localStorage.getItem(INVITE_KEY)); } catch { return false; }
+};
 
 export default function Login({ recovery = false, onRecovered }) {
-  const [mode, setMode] = useState(recovery ? 'reset' : 'login');
+  const invited = hasInvite();
+  const [mode, setMode] = useState(recovery ? 'reset' : invited ? 'signup' : 'login');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -18,7 +25,9 @@ export default function Login({ recovery = false, onRecovered }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message.includes('Invalid') ? 'Correo o contraseña incorrectos.' : error.message);
       } else if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email, password, options: { data: { name: name.trim() } }
+        });
         if (error) throw error;
         if (!data.session) setMsg({ ok: true, text: 'Revisa tu correo para confirmar la cuenta y luego entra aquí.' });
       } else if (mode === 'forgot') {
@@ -55,6 +64,14 @@ export default function Login({ recovery = false, onRecovered }) {
 
         <form onSubmit={submit} className="stack">
           <h2 className="login-title">{titles[mode]}</h2>
+          {invited && mode !== 'reset' && (
+            <p className="note note-ok">💌 Te invitaron a la agenda de un estudio. {mode === 'signup' ? 'Crea tu cuenta' : 'Entra'} y quedarás dentro automáticamente.</p>
+          )}
+          {mode === 'signup' && (
+            <Field label="Tu nombre" hint="Así te verán tus compañeras en la agenda">
+              <input required autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Alejandra" />
+            </Field>
+          )}
           {mode !== 'reset' && (
             <Field label="Correo">
               <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />

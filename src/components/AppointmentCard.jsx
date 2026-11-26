@@ -1,7 +1,10 @@
 import { KINDS, STATUSES, balanceOf, fmtTime, money } from '../lib/format.js';
 import { Icon } from './ui.jsx';
+import { WhoTag } from './Who.jsx';
+import { useStudio } from '../lib/studio.js';
 
 export default function AppointmentCard({ appt, client, currency, onOpen, showDate = false, now = Date.now() }) {
+  const { memberById, multi } = useStudio();
   const start = new Date(appt.start_at);
   const end = appt.end_at ? new Date(appt.end_at) : null;
   const inProgress = start.getTime() <= now && (end ? end.getTime() : start.getTime() + 3600e3) > now;
@@ -23,7 +26,8 @@ export default function AppointmentCard({ appt, client, currency, onOpen, showDa
         </div>
         <p className="appt-title">{appt.title}</p>
         <div className="appt-meta">
-          {client && <span><Icon name="user" size={14} /> {client.name}</span>}
+          {multi && <WhoTag appt={appt} memberById={memberById} />}
+          {client &&<span><Icon name="user" size={14} /> {client.name}</span>}
           {(appt.location || appt.address) && <span><Icon name="pin" size={14} /> {appt.location || appt.address}</span>}
           {balance > 0 && !cancelled && <span className="owed"><Icon name="money" size={14} /> Debe {money(balance, currency)}</span>}
         </div>

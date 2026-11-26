@@ -1,6 +1,6 @@
 // Modo demo (npm run demo): reemplaza Supabase por datos de ejemplo en el navegador.
 // Sirve para probar la interfaz sin cuenta ni internet. No se usa en la app publicada.
-const KEY = 'agenda-demo-db';
+const KEY = 'agenda-demo-db-v2';
 const uid = 'demo-user';
 const now = () => new Date().toISOString();
 
@@ -31,7 +31,15 @@ function seed() {
     a('a6', { client_id: 'c1', title: 'Boda Ana María y Juan', session_type: 'Boda', kind: 'salida', start_at: d(9, 14), end_at: d(9, 23), location: 'Hacienda El Roble', address: 'Chía, Cundinamarca', price: 4500000, paid: 1500000, status: 'confirmada' }),
     a('a7', { client_id: 'c2', title: 'Sesión familiar · Rodríguez', session_type: 'Familiar', start_at: d(-5, 10), price: 450000, paid: 450000, status: 'entregada' })
   ];
-  return { clients, appointments, settings: [], push_subscriptions: [] };
+  for (const x of clients) x.studio_id = 's1';
+  const owners = { a1: uid, a2: 'u2', a3: uid, a4: 'u2', a5: null, a6: uid, a7: 'u2' };
+  for (const x of appointments) Object.assign(x, { studio_id: 's1', assigned_to: owners[x.id], user_id: owners[x.id] || uid });
+  const studios = [{ id: 's1', name: 'Estudio Luz', invite_code: 'A1B2C3D4E5', created_by: uid }];
+  const studio_members = [
+    { studio_id: 's1', user_id: uid, display_name: 'Andrea', color: '#b5523b', role: 'owner', joined_at: '2026-01-01T00:00:00Z' },
+    { studio_id: 's1', user_id: 'u2', display_name: 'Alejandra', color: '#4c72a0', role: 'member', joined_at: '2026-01-02T00:00:00Z' }
+  ];
+  return { clients, appointments, settings: [], push_subscriptions: [], studios, studio_members };
 }
 
 let db;
@@ -103,6 +111,16 @@ const channel = { on() { return channel; }, subscribe() { return channel; } };
 export const configured = true;
 export const supabase = {
   from: (t) => new Query(t),
+  rpc: async (fn) => {
+    if (fn === 'ensure_studio') return { data: 's1', error: null };
+    if (fn === 'join_studio') return { data: { studio_id: 's1', name: 'Estudio Luz', already: true }, error: null };
+    if (fn === 'new_invite_code') {
+      db.studios[0].invite_code = Math.random().toString(16).slice(2, 12).toUpperCase();
+      persist();
+      return { data: db.studios[0].invite_code, error: null };
+    }
+    return { data: null, error: { message: 'rpc desconocida' } };
+  },
   channel: () => channel,
   removeChannel: () => {},
   functions: { invoke: async () => ({ data: { sent: 1 }, error: null }) },

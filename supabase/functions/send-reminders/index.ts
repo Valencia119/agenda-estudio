@@ -89,8 +89,29 @@ async function loadSettings() {
   return map;
 }
 
+type Member = { studio_id: string; user_id: string; display_name: string };
+async function loadMembers() {
+  const { data } = await db.from('studio_members').select('studio_id, user_id, display_name');
+  const byStudio = new Map<string, Member[]>();
+  const byUser = new Map<string, Member>();
+  for (const m of (data ?? []) as Member[]) {
+    byUser.set(m.user_id, m);
+    if (!byStudio.has(m.studio_id)) byStudio.set(m.studio_id, []);
+    byStudio.get(m.studio_id)!.push(m);
+  }
+  return { byStudio, byUser };
+}
+type Members = Awaited<ReturnType<typeof loadMembers>>;
+
+// "Andrea", "Alejandra" o "Ambas" (solo si el estudio tiene más de una fotógrafa)
+function photographer(a: any, members: Members) {
+  const team = members.byStudio.get(a.studio_id) ?? [];
+  if (team.length < 2) return null;
+  return a.assigned_to ? members.byUser.get(a.assigned_to)?.display_name ?? null : 'Ambas';
+}
+
 // ---------------- recordatorios de citas ----------------
-async function processAppointmentReminders(settings: Map<string, Record<string, any>>) {
+async function processAppointmentReminders(settings: Map<string, Record<string, any>>, members: Members) {
   const now = new Date();
   const oldest = new Date(now.getTime() - 2 * 60 * 60 * 1000); // no envía avisos con más de 2 h de retraso
 
@@ -109,33 +130,40 @@ async function processAppointmentReminders(settings: Map<string, Record<string, 
     .update({ sent_at: now.toISOString() })
     .in('id', due.map((d) => d.id))
     .is('sent_at', null)
-    .select('id, user_id, minutes_before, appointment:appointments(id, title, kind, start_at, location, address, status, client:clients(name))');
+    .select('id, user_id, minutes_before, appointment:appointments(id, studio_id, assigned_to, title, kind, start_at, location, address, status, client:clients(name))');
 
   let count = 0;
   for (const r of claimed ?? []) {
     const a = r.appointment as any;
     if (!a || a.status === 'cancelada') continue;
-    const tz = settings.get(r.user_id)?.timezone ?? 'America/Bogota';
     const start = new Date(a.start_at);
     const emoji = KIND_EMOJI[a.kind] ?? '📌';
     const place = a.location || a.address;
-    const body = [
-      `🕒 ${fmtTime(start, tz)}`,
-      place ? `📍 ${place}` : null,
-      a.client?.name ? `👤 ${a.client.name}` : null
-    ].filter(Boolean).join('  ·  ');
-    await sendToUser(r.user_id, {
-      title: `${emoji} ${whenLabel(r.minutes_before, start, tz)}: ${a.title}`,
-      body,
-      tag: `appt-${a.id}-${r.minutes_before}`
-    });
+    const who = photographer(a, members);
+    // avisa a todas las fotógrafas del estudio
+    const recipients = (members.byStudio.get(a.studio_id) ?? []).map((m) => m.user_id);
+    if (!recipients.length) recipients.push(r.user_id);
+    for (const uid of recipients) {
+      const tz = settings.get(uid)?.timezone ?? 'America/Bogota';
+      const body = [
+        `🕒 ${fmtTime(start, tz)}`,
+        place ? `📍 ${place}` : null,
+        a.client?.name ? `👤 ${a.client.name}` : null,
+        who ? `📷 ${who}` : null
+      ].filter(Boolean).join('  ·  ');
+      await sendToUser(uid, {
+        title: `${emoji} ${whenLabel(r.minutes_before, start, tz)}: ${a.title}`,
+        body,
+        tag: `appt-${a.id}-${r.minutes_before}`
+      });
+    }
     count++;
   }
   return count;
 }
 
 // ---------------- resúmenes diarios ----------------
-async function processDailySummaries(settings: Map<string, Record<string, any>>) {
+async function processDailySummaries(settings: Map<string, Record<string, any>>, members: Members) {
   const now = new Date();
   let count = 0;
   for (const s of settings.values()) {
@@ -156,10 +184,12 @@ async function processDailySummaries(settings: Map<string, Record<string, any>>)
     }
     if (!jobs.length) continue;
 
+    const studioId = members.byUser.get(s.user_id)?.studio_id;
+    if (!studioId) continue;
     const { data: appts } = await db
       .from('appointments')
-      .select('id, title, kind, start_at, location, status, client:clients(name)')
-      .eq('user_id', s.user_id)
+      .select('id, studio_id, assigned_to, title, kind, start_at, location, status, client:clients(name)')
+      .eq('studio_id', studioId)
       .neq('status', 'cancelada')
       .gte('start_at', new Date(now.getTime() - 36 * 3600 * 1000).toISOString())
       .lte('start_at', new Date(now.getTime() + 60 * 3600 * 1000).toISOString())
@@ -180,8 +210,8 @@ async function processDailySummaries(settings: Map<string, Record<string, any>>)
       const dayWord = job.kind === 'morning' ? 'Hoy' : 'Mañana';
       const icon = job.kind === 'morning' ? '☀️' : '🌙';
       const lines = list.slice(0, 6).map((a: any) => {
-        const who = a.client?.name ? ` (${a.client.name})` : '';
-        return `${fmtTime(new Date(a.start_at), tz)} ${KIND_EMOJI[a.kind] ?? '📌'} ${a.title}${who}`;
+        const ph = photographer(a, members);
+        return `${fmtTime(new Date(a.start_at), tz)} ${KIND_EMOJI[a.kind] ?? '📌'} ${a.title}${ph ? ` · 📷 ${ph}` : ''}`;
       });
       if (list.length > 6) lines.push(`…y ${list.length - 6} más`);
 
@@ -222,8 +252,8 @@ Deno.serve(async (req) => {
   const { data: cfg } = await db.from('cron_config').select('secret').single();
   if (!cfg || req.headers.get('x-cron-key') !== cfg.secret) return json({ error: 'No autorizado' }, 401);
 
-  const settings = await loadSettings();
-  const reminders = await processAppointmentReminders(settings);
-  const summaries = await processDailySummaries(settings);
+  const [settings, members] = await Promise.all([loadSettings(), loadMembers()]);
+  const reminders = await processAppointmentReminders(settings, members);
+  const summaries = await processDailySummaries(settings, members);
   return json({ reminders, summaries });
 });
