@@ -40,8 +40,14 @@ export function useAgenda(userId) {
       const tz = deviceTz();
       if (!settings) {
         const r = await supabase.from('settings').insert({ user_id: userId, timezone: tz }).select().single();
-        if (r.error) throw r.error;
-        settings = r.data;
+        if (r.error) {
+          // otra carga simultánea ya los creó: se leen
+          const again = await supabase.from('settings').select('*').maybeSingle();
+          if (again.error || !again.data) throw r.error;
+          settings = again.data;
+        } else {
+          settings = r.data;
+        }
       } else if (settings.timezone !== tz) {
         // los recordatorios del servidor siguen la zona horaria del dispositivo
         const r = await supabase.from('settings').update({ timezone: tz }).eq('user_id', userId).select().single();

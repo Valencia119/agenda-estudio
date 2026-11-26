@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Empty, Icon } from '../components/ui.jsx';
-import { balanceOf, money } from '../lib/format.js';
+import { balanceOf, money, moneyShort } from '../lib/format.js';
 
 export default function Clients({ clients, appointments, settings, onOpen, onNew }) {
   const [q, setQ] = useState('');
@@ -61,7 +61,7 @@ export default function Clients({ clients, appointments, settings, onOpen, onNew
                       {s?.next ? ` · próxima ${new Date(s.next).toLocaleDateString('es', { day: 'numeric', month: 'short' })}` : ''}
                     </span>
                   </span>
-                  {s?.owed > 0 && <span className="pill owed-pill">{money(s.owed, currency)}</span>}
+                  {s?.owed > 0 && <span className="pill owed-pill" title={`Debe ${money(s.owed, currency)}`}>{moneyShort(s.owed, currency)}</span>}
                   <Icon name="right" size={16} />
                 </button>
               </li>

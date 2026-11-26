@@ -82,12 +82,12 @@ export default function Settings({ settings, user, pushState, onEnablePush, onTe
       <section className="card">
         <h2 className="card-title">Resumen diario</h2>
         <div className="setting-line">
-          <Toggle label="☀️ Resumen de la mañana (lo que tienes hoy)" checked={s.morning_enabled} onChange={(v) => save({ morning_enabled: v })} />
+          <Toggle label="☀️ En la mañana: lo de hoy"checked={s.morning_enabled} onChange={(v) => save({ morning_enabled: v })} />
           <input type="time" value={s.morning_time?.slice(0, 5)} disabled={!s.morning_enabled}
             onChange={(e) => e.target.value && save({ morning_time: e.target.value })} aria-label="Hora del resumen de la mañana" />
         </div>
         <div className="setting-line">
-          <Toggle label="🌙 Aviso de la noche (lo que tienes mañana)" checked={s.evening_enabled} onChange={(v) => save({ evening_enabled: v })} />
+          <Toggle label="🌙 En la noche: lo de mañana"checked={s.evening_enabled} onChange={(v) => save({ evening_enabled: v })} />
           <input type="time" value={s.evening_time?.slice(0, 5)} disabled={!s.evening_enabled}
             onChange={(e) => e.target.value && save({ evening_time: e.target.value })} aria-label="Hora del aviso de la noche" />
         </div>

@@ -114,6 +114,16 @@ export function money(n, currency = 'COP') {
     return `$${v.toLocaleString('es')}`;
   }
 }
+// versión corta para espacios pequeños: $4,3 M
+export function moneyShort(n, currency = 'COP') {
+  const v = Number(n || 0);
+  if (Math.abs(v) < 100000) return money(v, currency);
+  try {
+    return new Intl.NumberFormat('es', { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(v);
+  } catch {
+    return money(v, currency);
+  }
+}
 export const balanceOf = (a) => Math.max(0, Number(a.price || 0) - Number(a.paid || 0));
 
 // ---------- enlaces ----------

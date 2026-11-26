@@ -6,6 +6,14 @@ import {
 import { isIOS } from '../lib/device.js';
 import { Icon, Sheet, useToast } from './ui.jsx';
 
+const WA_PHRASE = {
+  sesion: 'tu sesión de fotos',
+  visita: 'tu cita en el estudio',
+  salida: 'tu sesión de fotos',
+  entrega: 'la entrega de tus fotos',
+  otro: 'nuestra cita'
+};
+
 export default function AppointmentDetail({ appt, client, settings, saveAppointment, deleteAppointment, onEdit, onOpenClient, onClose }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -39,7 +47,7 @@ export default function AppointmentDetail({ appt, client, settings, saveAppointm
   };
 
   const waText = client
-    ? `Hola ${client.name.split(' ')[0]}, te escribo para recordarte tu ${(appt.session_type || KINDS[appt.kind].short).toLowerCase()} el ${fmtDayLong(start).toLowerCase()} a las ${fmtTime(start)}${appt.location ? ` en ${appt.location}` : ''}. 📸`
+    ? `Hola ${client.name.split(' ')[0]}, te escribo para recordarte ${WA_PHRASE[appt.kind] || 'nuestra cita'} el ${fmtDayLong(start).toLowerCase()} a las ${fmtTime(start)}${appt.location ? ` en ${appt.location}` : ''}. 📸`
     : '';
   const wa = client && waLink(client.phone, settings?.country_code || '57', waText);
 

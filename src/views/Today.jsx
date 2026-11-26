@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import AppointmentCard from '../components/AppointmentCard.jsx';
 import { Empty, Icon } from '../components/ui.jsx';
-import { addDays, balanceOf, dayKey, fmtDayLong, greeting, money, relativeDay, startOfDay } from '../lib/format.js';
+import { addDays, balanceOf, dayKey, fmtDayLong, greeting, money, moneyShort, relativeDay, startOfDay } from '../lib/format.js';
 
 export default function Today({ appointments, clients, settings, now, banner, onOpen, onNew }) {
   const currency = settings?.currency || 'COP';
@@ -57,7 +57,7 @@ export default function Today({ appointments, clients, settings, now, banner, on
       <div className="stats">
         <div className="stat"><span className="stat-num">{activeToday.length}</span><span className="stat-label">Hoy</span></div>
         <div className="stat"><span className="stat-num">{weekCount}</span><span className="stat-label">Próximos 7 días</span></div>
-        <div className="stat"><span className="stat-num stat-money">{money(owed, currency)}</span><span className="stat-label">Por cobrar</span></div>
+        <div className="stat"><span className="stat-num stat-money" title={money(owed, currency)}>{moneyShort(owed, currency)}</span><span className="stat-label">Por cobrar</span></div>
       </div>
 
       <section className="day-section">

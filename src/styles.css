@@ -110,7 +110,7 @@ p { margin: 0; }
   -webkit-backdrop-filter: saturate(1.4) blur(18px);
   border-top: 1px solid var(--line);
 }
-.nav-brand, .nav-new { display: none; }
+.nav .nav-brand, .nav .nav-new { display: none; }
 .nav-item {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   border: 0; background: none; color: var(--muted); font-size: 0.72rem; font-weight: 500;
@@ -139,12 +139,12 @@ p { margin: 0; }
     border-top: 0; border-right: 1px solid var(--line);
     background: var(--surface);
   }
-  .nav-brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.2rem; font-weight: 600; padding: 0 10px 22px; }
+  .nav .nav-brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.2rem; font-weight: 600; padding: 0 10px 22px; }
   .nav-brand img { border-radius: 9px; }
   .nav-item { flex-direction: row; justify-content: flex-start; gap: 12px; padding: 11px 12px; border-radius: 12px; font-size: 0.95rem; }
   .nav-item:hover { background: var(--surface-2); color: var(--ink); }
   .nav-item.on { background: var(--accent-soft); color: var(--ink); }
-  .nav-new { display: inline-flex; margin-top: 18px; }
+  .nav .nav-new { display: inline-flex; margin-top: 18px; }
   .content { margin-left: 240px; margin-right: 0; max-width: none; padding: 36px clamp(24px, 5vw, 64px) 64px; }
   .content > * { max-width: 820px; margin-inline: auto; }
   .fab { display: none; }
@@ -236,8 +236,8 @@ input[type='time'], input[type='date'] { -webkit-appearance: none; appearance: n
 .new-client { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .new-client .pill { flex: none; }
 
-.toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; flex: 1; }
-.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; flex: 1; min-width: 0; }
+.toggle input { position: absolute; right: 0; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; pointer-events: none; }
 .toggle-track { flex: none; width: 50px; height: 30px; border-radius: 999px; background: var(--line); position: relative; transition: background 0.2s; }
 .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 25%); transition: transform 0.2s; }
 .toggle input:checked + .toggle-track { background: var(--ok); }
@@ -245,7 +245,7 @@ input[type='time'], input[type='date'] { -webkit-appearance: none; appearance: n
 .toggle input:focus-visible + .toggle-track { box-shadow: 0 0 0 3px var(--accent-soft); }
 .setting-line { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .setting-line:last-child { border-bottom: 0; }
-.setting-line input[type='time'] { width: 120px; flex: none; }
+.setting-line input[type='time'] { width: 136px; flex: none; padding-inline: 10px; }
 .setting-line input:disabled { opacity: 0.5; }
 
 /* ---------- tarjetas y notas ---------- */

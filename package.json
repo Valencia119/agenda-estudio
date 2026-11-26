@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "icons": "node scripts/make-icons.mjs",
-    "deploy": "vite build && gh-pages -d dist -t"
+    "deploy": "vite build && gh-pages -d dist -t",
+    "demo": "vite --config vite.demo.config.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

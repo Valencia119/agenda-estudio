@@ -11,3 +11,4 @@ supabase/.branches/
 .DS_Store
 Thumbs.db
 .supabase-db-password
+.test-account.json
