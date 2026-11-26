@@ -10,3 +10,4 @@ supabase/.branches/
 .vapid-keys.json
 .DS_Store
 Thumbs.db
+.supabase-db-password
