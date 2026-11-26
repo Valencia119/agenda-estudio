@@ -49,13 +49,14 @@ desktop/                 programa de Windows (Electron)
 ```bash
 cp .env.example .env      # llena con los datos de tu proyecto de Supabase
 npm install
-npm run dev
+npm run dev               # app real contra Supabase
+npm run demo              # app con datos de ejemplo, sin Supabase (http://localhost:5174/agenda-estudio/)
 ```
 
 ### Publicar una nueva versión
 
 ```bash
-npm run build && npx gh-pages -d dist                  # app web
+npm run deploy                                          # app web (compila y publica en gh-pages)
 cd desktop && npm run dist                              # instalador de Windows
 gh release create vX.Y.Z desktop/dist/AgendaEstudio-Setup.exe
 ```
